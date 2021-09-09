@@ -1,4 +1,7 @@
 const { request, response } = require("express");
+const encrypter = require("bcryptjs");
+
+const User = require("../models/user"); //se pone en Camelcase ya que se crearan instancias de Usuario
 
 const getUsers = (req = request, res = response) => {
   // const query = req.query; //para obtener los queryParams de la URL
@@ -10,12 +13,28 @@ const getUsers = (req = request, res = response) => {
   });
 };
 
-const postUser = (req = request, res = response) => {
-  const body = req.body;
+const postUser = async (req = request, res = response) => {
+  const { nombre, email, password, rol } = req.body;
+  const user = new User({ nombre, email, password, rol }); //si el body llegara a contener data que no esta en el modelo , esta data se ignora
+
+  //Verificar si el correo existe
+  const existeEmail = await User.findOne({ email });
+  if (existeEmail) {
+    return res.status(400).json({
+      msg: "El correo ya esta registrado. Ingresa otro.",
+    });
+  }
+
+  //Encriptar la Pass
+  const salt = encrypter.genSaltSync(); //N° de vueltas del encrypter (10 default)
+  user.password = encrypter.hashSync(password, salt);
+
+  //Guardar en DB
+  await user.save(); //para guardar en la BD el usuario
 
   res.json({
     msg: "post API - controller",
-    body,
+    user,
   });
 };
 
