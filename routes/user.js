@@ -7,15 +7,28 @@ const {
   patchUser,
   deleteUser,
 } = require("../controllers/users");
-const { esRolValido } = require("../helpers/db-validators");
+const {
+  esRolValido,
+  existeEmail,
+  existeUsuarioPorID,
+} = require("../helpers/db-validators");
 const { validarCampos } = require("../middlewares/validar-campos");
-
 
 const router = Router();
 
 router.get("/", getUsers);
 
-router.put("/:id", putUser);
+router.put(
+  "/:id",
+  [
+    check("id", "No es un ID válido").isMongoId(),
+    check("id").custom(existeUsuarioPorID),
+    check("rol").custom(esRolValido),
+
+    validarCampos,
+  ],
+  putUser
+);
 
 router.post(
   "/",
@@ -27,14 +40,23 @@ router.post(
       min: 8,
     }),
     check("email", "El correo no es válido.").isEmail(),
-    check("rol").custom( esRolValido ),
-    validarCampos, //recibe todos los errores q arroja el check
+    check("email").custom(existeEmail),
+    check("rol").custom(esRolValido),
+    validarCampos, //recibe todos los errores q arroja el check, si existen nunca llega el request a la route (evita q crashee la API)
   ],
   postUser
 );
 
 router.patch("/", patchUser);
 
-router.delete("/", deleteUser);
+router.delete(
+  "/:id",
+  [
+    check("id", "No es un ID válido").isMongoId(),
+    check("id").custom(existeUsuarioPorID),
+    validarCampos,
+  ],
+  deleteUser
+);
 
 module.exports = router;
