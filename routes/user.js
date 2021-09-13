@@ -12,7 +12,13 @@ const {
   existeEmail,
   existeUsuarioPorID,
 } = require("../helpers/db-validators");
-const { validarCampos } = require("../middlewares/validar-campos");
+
+const {
+  validarCampos,
+  validarJWT,
+  esAdminRole,
+  tieneRol,
+} = require("../middlewares");
 
 const router = Router();
 
@@ -52,6 +58,11 @@ router.patch("/", patchUser);
 router.delete(
   "/:id",
   [
+    //si alguno de los middleware falla , fallan todos.
+    //Las request pasan entre los middlewares y al final van a parar al controller
+    validarJWT,
+    tieneRol("ADMIN_ROLE", "VENTAS_ROLE"),
+    // esAdminRole, //forza a que el usuario sea ADMIN para eliminar
     check("id", "No es un ID válido").isMongoId(),
     check("id").custom(existeUsuarioPorID),
     validarCampos,

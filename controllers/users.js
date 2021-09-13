@@ -72,15 +72,18 @@ const patchUser = (req = request, res = response) => {
 const deleteUser = async (req = request, res = response) => {
 
   const { id } = req.params;
-
   //Borrado fisico del user
   // const user = await User.findByIdAndDelete( id );
-
+  
   //Borrado logico del user
   const user = await User.findByIdAndUpdate( id, { estado: false } );
 
+  //Esto se obtiene desde los middlewares (en este caso de validar-jwt)
+  // const authenticatedUser = req.user;
+
   res.json({
-    user
+    user,
+    // authenticatedUser
   });
 };
 
